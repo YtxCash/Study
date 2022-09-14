@@ -1,0 +1,1449 @@
+# Rust
+
+- [Rust](#rust)
+  - [1 Cargo](#1-cargo)
+  - [2 基础](#2-基础)
+    - [2.1 变量](#21-变量)
+    - [2.2 基本类型](#22-基本类型)
+      - [数值](#数值)
+      - [字符、布尔、单元类型](#字符布尔单元类型)
+      - [语句和表达式](#语句和表达式)
+      - [函数](#函数)
+    - [2.3 所有权与借用](#23-所有权与借用)
+      - [所有权](#所有权)
+      - [引用和借用](#引用和借用)
+    - [2.4 复合类型](#24-复合类型)
+      - [字符串与切片引用](#字符串与切片引用)
+      - [元组](#元组)
+      - [结构体](#结构体)
+      - [枚举](#枚举)
+      - [数组](#数组)
+    - [2.5 流程控制](#25-流程控制)
+      - [`if`和`else`](#if和else)
+      - [`for`循环，遍历集合内容](#for循环遍历集合内容)
+      - [`while`循环，有一个条件控制循环，`true`继续，`false`退出](#while循环有一个条件控制循环true继续false退出)
+      - [`loop`循环，简单的无限循环，需要使用`break`跳出循环](#loop循环简单的无限循环需要使用break跳出循环)
+    - [2.6 模式匹配](#26-模式匹配)
+      - [`match`：一种流程控制，对目标所有选项做相应的处理](#match一种流程控制对目标所有选项做相应的处理)
+      - [`Option<T>`](#optiont)
+      - [适用场景](#适用场景)
+    - [2.7 方法](#27-方法)
+    - [2.8 泛型特征](#28-泛型特征)
+      - [泛型](#泛型)
+      - [特征`trait`](#特征trait)
+      - [特征类型](#特征类型)
+      - [特征进阶](#特征进阶)
+    - [2.9 集合](#29-集合)
+      - [vector](#vector)
+      - [HashMap](#hashmap)
+    - [2.10 类型转换](#210-类型转换)
+      - [as](#as)
+      - [TryInto](#tryinto)
+    - [2.11 返回值和错误处理](#211-返回值和错误处理)
+      - [panic](#panic)
+      - [`Rustlt`和`?`](#rustlt和)
+    - [2.12 包和模块](#212-包和模块)
+      - [包](#包)
+      - [`Module`模块](#module模块)
+      - [`use`用法](#use用法)
+    - [2.13 注释和文档](#213-注释和文档)
+    - [2.14 格式化输出](#214-格式化输出)
+
+## 1 Cargo
+
+```shell
+cargo new
+cargo build
+cargo run
+cargo check
+```
+
+## 2 基础
+
+### 2.1 变量
+
+1. 命名规范
+   1. 驼峰命名法：Type
+      1. UpperCameCase
+      2. 复合词的缩略形式认定是一个单词，只对首字母进行大写，如 Uuid，不是 UUID
+   2. 蛇形命名法：value
+      1. is_xid_start
+      2. 除了最后一部分，其他部分都不能由单个字母组成，如 is_xid_star_t
+   3. 规则
+      | 条目             | 惯例                  |
+      | :--------------- | :-------------------- |
+      | 类型 type      | UpperCamelCase        |
+      | 特征 trait      | UpperCamelCase        |
+      | 枚举 enum        | UpperCamelCase        |
+      | 枚举成员         | UpperCameCase         |
+      | 结构体 struct   | UpperCameCase         |
+      | 模块 Module     | snake_case            |
+      | 函数 fn         | snake_case            |
+      | 方法 Methods     | snake_case            |
+      | 宏 Macros        | snake_case!           |
+      | 局部变量         | snake_case            |
+      | 静态类型 Statics | SNAKE_CASE            |
+      | 常量 Const       | SNAKE_CASE            |
+      | 类型参数         | T                     |
+      | 生命周期         | 通常小写字母，'a，‘de |
+
+   4. 特征`Trait`，使用动词，而不是形容词或名词
+   5. 命名要一致性的词序，`谓语-宾语-错误`，如`ParseAddrError`
+
+2. 绑定：任何内存对象都有主人，一般情况下完全属于它的主人；绑定就是把内存对象和一个变量绑定在一起
+3. 可变性：默认不可变，`let mut`使变量可以修改，但不能改变类型
+4. 忽略未使用变量：变量开头添加下划线，如`_unused`
+5. 解构：从一个相对复杂的声明中，匹配变量所绑定的内存对象，支持元组`()`、切片`&s[n]`、结构体
+6. 常量：`const`声明，必须标注类型；无法`mut`，自始至终都不可变；字母全部大写，`_`分隔单词，如`const MAX_POINT = 10000`
+7. 遮蔽：允许声明同名的变量，后声明的会遮蔽先声明的
+
+### 2.2 基本类型
+
+#### 数值
+
+   1. 整型
+      1. 有符号：`i8 i16 i32 i64 isize`
+         1. 范围：-(2<sup>n-1</sup>) ~ 2<sup>n-1</sup> - 1
+      2. 无符号：`u8 u16 u32 u64 usize`
+         1. 范围：2<sup>n</sup> - 1
+      3. `isize`和`usize`取决于CPU类型：32位，这两个类型是32位的；64位，它们则是64位；主要用于集合的索引
+      4. 溢出
+         1. 补码循环溢出，例 u8 范围 0 ~ 255，256 则补码为零；对范围取模
+   2. 浮点型：`f32 f64`
+      1. 浮点数往往是你想要值的近似表达
+      2. 浮点数在某些特性上是反直觉的
+      3. 避免在浮点数上测试相等性
+      4. 当结果在数学上可能存在未定义时，需要格外小心
+      5. 比较
+         1. `(a_f64 + b - c).abs() <= 0.00001`
+         2. `.to_bits()`
+      6. Nan，not a number:`.is_nan()`
+   3. 小数
+      1. 控制打印位数`"{:.n}"`
+   4. 序列
+      1. 只允许用于数字或字符类型，因为它们可以连续
+      2. `for i in 1..5{}`，不包含 5
+      3. `for i in 1..=5{}`，包含 5
+   5. 有理数、复数
+      1. 不包含在标准库中，需引入`num`库，`cargo add num`
+   6. 类型转换必须是显式的
+   7. 数值可以使用方法，如四舍五入取整`12.14_f64.round()`，需显示声明变量类型`f64`
+
+#### 字符、布尔、单元类型
+
+   1. 字符串字面量`String`
+   2. 字符串切片`&str`
+   3. 字符`char`
+      1. 用`''`表示；字符串`""`
+      2. 不仅仅是`ASCII`，所有的`Unicode`值都可以作为字符
+      3. `Unicode`都是4个字节编码，因此字符类型也占用4个字节
+      4. `std::mem::size_of_val(&)`，一个字符所占字节
+   4. 布尔
+      1. `true`
+      2. `false`
+      3. 占用 1 个字节
+   5. 单元类型()，其唯一值也是()，不占用内存、零字节
+
+#### 语句和表达式
+
+   1. 语句：完成了具体的动作，没有返回值，以`;`结尾
+   2. 表达式：进行求值，返回一个值，不能有`;`
+
+#### 函数
+
+   1. 关键字`fn`，函数名`蛇形命名法`，参数`(x:i32,y:i32)`，返回类型`-> i32`，代码区`{}`
+   2. 函数名和变量名使用`蛇形命名法`，位置随便放，有就好
+   3. 函数也是表达式；每个参数都需要标注类型
+   4. 无返回值，单元类型`()`是一个零字节的元组，可以用来表达一个函数没有返回值
+      1. 函数没有返回值，返回一个`()`
+      2. 通过结尾的`;`返回一个`()`
+   5. 永不返回的发散函数
+      1. 函数返回类型为`!`
+
+### 2.3 所有权与借用
+
+#### 所有权
+
+   1. 栈：先进后出，占用已知且大小固定的内存空间
+   2. 堆：大小未知或可能变化的数据
+      1. 先找到足够存放数据的内存空间
+      2. 标记已使用，返回一个指向该内存的指针
+      3. 指针推入栈中
+      4. 通过栈中的指针获取数据在堆上的位置，进而访问
+   3. 所有权：每个值都被一个变量所持有，该变量称为值的所有者，一个值同时只能有一个所有者
+   4. 当变量（所有者）离开作用域时，这个值将被抛弃
+   5. 拷贝：存储在栈上的基本类型，`=`会拷贝，和克隆一样
+      1. 栈中存储的类型，都会拥有`Copy`特性，不需要额外分配内存或其他某种形式的资源
+      2. 整型、布尔型、浮点型、字符、元组（其元素必须有`Copy`特性）、不可变引用`&T`
+   6. 移动：存储在堆上的复合类型，`=`会转移所有权
+   7. 克隆：`rust`永远不会自动创建数据的深拷贝；需要复制堆上数据时，用`.clone()`
+   8. 函数传值与返回，同样会发生所有权操作
+
+#### 引用和借用
+
+   1. 获取变量的引用`let y = &x`
+   2. 解引用`*y`
+   3. 可变引用
+      1. 变量声明为`mut`
+      2. 引用声明为`&mut x`
+      3. 函数参数接受可变引用`(&mut x)`
+   4. 同一作用域，一个数据只能有一个可变引用；引用作用域为`声明到最后一次使用`
+   5. 可变引用与不可变引用不能同时存在
+
+### 2.4 复合类型
+
+#### 字符串与切片引用
+
+   1. 切片引用`&str`
+      1. `[0..n]`右半开区间，和`[)`同理
+      2. `[0..=n]`闭区间，和`[]`同理
+      3. 从索引`0`开始，可以省略`0`，`&s[..n]`
+      4. 取得最后一个字节，`&s[n..]`
+      5. 切片取的是字节，索引必须落在字符之间的边界位置
+      6. 一个`&str`是 2 个字，第一个是指向数据的指针，第二个是切片的长度；64 位机器，一个字是 8 字节，一个切片引用就是 16 字节
+
+         ```rust
+         let s = String::from("Hello World");
+         let s1 = &s[0..n];
+         let s2 = &s[..n];
+         let s3 = &s[..=n-1];
+         let s4 = &s[0..];
+         ```
+
+   2. `String`和`&str`
+      1. `String` to `&str`，取引用即可
+
+         ```rust
+         let s1 = &s[0..n];
+         let s2 = s.as_str();
+         let s3 = &s;
+         ```
+
+      2. `&str` to `String`
+
+         ```rust
+         let s = String::from("Hello World");
+         "Hello World".to_string();
+         ```
+
+      3. 索引
+         1. 字符串`String`不允许直接取索引，`let slice = s[0..n]`会失败
+         2. 切片引用`&s[0..n]`索引字节，需注意边界问题
+         3. 使用`utf8_slice`索引字符，会安全很多
+
+      4. 操作
+         1. 追加（Push）：在原`mut`变量追加
+            1. `s.push('')`，追加单个字符
+            2. `s.push_str(“”）`，追加字符串字面量
+         2. 插入（insert)：在原`mut`变量插入
+            1. `s.insert(索引位置,'字符')`
+            2. `s.insert_str(索引位置，"字符串")`
+         3. 替换（Replace)
+            1. `s.replace("要被替换的字符串","新字符串")`：返回一个新字符串，适合`String`和`&str`
+            2. `s.replacen("要被替换的字符串","新字符串",要替换的个数)`：返回一个新字符串，适用`String`和`&str`
+            3. `s.repance_range(7..8,"新字符串")`：在原`mut`变量替换
+         4. 删除（Delete)，仅适用`String`类型
+            1. `s.pop()`：删除并返回字符串的最后一个字符
+            2. `s.remove(位置)`：直接操作原`mut`字符串，删除指定位置的字符，返回删除的字符；按字节处理，需注意边界
+            3. `s.truncate(位置)`：直接操作原`mut`字符串，删除指定位置至结尾的全部字符，无返回值；按字节处理，需注意边界
+            4. `s.clear()`：直接操作原`mut`字符串，清空
+         5. 连接，返回一个新`String`
+            1. `+`号右边的参数必须为`&str`类型
+            2. `+`号左边的参数，会涉及所有权转移
+            3. `+`和`+=`都返回一个新的字符串
+            4. `format!("{}{}",s1,s2)`：合并字符串，返回一个新`String`
+         6. 遍历
+
+            1. 字符
+
+               ```rust
+               for c in s.chars()
+               {
+                  println!("{}",c);
+               }
+               ```
+
+            2. 字节
+
+               ```rust
+                  for b in s.bytes()
+                  {
+                  println!("{}",b);
+                  }
+               ```
+
+#### 元组
+
+   1. 声明：使用`()`将多个类型的元素组合到一起：`let a = (6.8, 32, "hello")`
+      1. 元组，最多声明`12`个元素
+   2. 解构：使用`模式匹配`或`.`操作符来获取元组中的值
+      1. 模式匹配：`let (x, y, z) = a`
+      2. `.`操作符：`a.0`，索引从 0 开始
+   3. 使用
+      1. 函数返回值，使用元组返回多个值
+
+#### 结构体
+
+   1. 定义
+      1. 关键字`struct`
+      2. 清晰明确的结构体名称`UpperNameCase`
+      3. 存储数据的字段和其类型`{snake_case: String，}`，逗号`,`分隔，花括号`{}`包围
+      4. `#[allow(dead_code)]`，在结构体未定义方法或特征时、消除结构体噪音
+
+         ```rust
+         #[allow(dead_code)]
+         struct User {
+            user_name:String,
+            email:String,
+            active:bool,
+            sign_in_account:u64,
+         }
+         ```
+
+   2. 创建实例
+      1. 每个字段都需要初始化
+      2. 字段的顺序**不需要**和定义时一致
+
+         ```rust
+         let user1 = User{
+            email: String::from("Hello World"),
+            active: true,
+            user_name:String::from("路人"),
+            sign_in_account: 1.0,
+         };
+         ```
+
+      3. 简化创建，当函数参数和结构体字段同名时，可以使用缩略的方式进行初始化，返回的结构体不能有`;`
+
+         ```rust
+         fn build_user(email:String, user_name:String) -> User{
+            User{
+               email,
+               user_name,
+               active:true,
+               sign_in_account:1.0,
+            }
+         }
+         ```
+
+   3. 访问
+      1. `user1.email`
+      2. 需要将结构体声明为`mut`，才能修改其中的字段
+   4. 更新
+      1. 根据结构体`User`和实例`user1`创建实例`user2`，只需对`email`赋值，其他字段从`user1`获取
+      2. `user1`实现`Copy`特征的字段，会复制进`user2`；未实现的转移所有权
+
+         ```rust
+         let user2 = User{
+            email:String::from("123456789@qq.com"),
+            ..user1
+         }；
+         ```
+
+   5. 元组结构体，字段只有类型、没有名称的结构体，括号`()`包围
+
+      ```rust
+      struct color(i32,i32,i32);
+      ```
+
+   6. 单元结构体，没有任何字段和属性，只有结构体名，`struct AlwaysEqual;`
+   7. 若是在结构体中使用`&`，需要引入生命周期
+   8. 打印，需引入`#[derive(Debug)]`特征
+
+#### 枚举
+
+   1. 关键字`enum`，`名称`,`{全部可能的成员}`，`,`分隔，枚举名和其字段均采用`驼峰命名法`
+   2. 枚举是一个类型，它会包含所有可能的枚举成员，而枚举值是该类型中某个成员的实例
+
+      ```rust
+      enum PokerSuit{
+         Clubs，
+         Spades,
+         Diamonds,
+         Hearts,
+      }
+      ```
+
+   3. 枚举值`let heart = PokerSuit::Hearts;`，通过`::`访问枚举成员
+   4. 直接将数据信息关联到枚举成员上，成员可以持有不同类型的数据
+
+      ```rust
+      enum PokerSuit{
+         Clubs(u8),
+         Spades(u8),
+         Diamonds(u8),
+         Hearts(f64),
+      }
+      ```
+
+   5. Option 枚举处理空值,`Some(T)`表示含有值，`None`表示没有值
+
+      ```rust
+      enum Option<T>{
+         Some(T),
+         None,
+      }
+      ```
+
+      若要使用`None`，需指明`T`的具体类型
+      `let absent_number : Option<i32> = None;`
+
+      取出枚举中的值，用`match n {}`
+
+      ```rust
+      fn plus_one(x:Option<i32>) -> Option<i32>{
+         match x{
+            Some(x) => Some(x + 1),
+            None => None,
+         }
+      }
+      ```
+
+#### 数组
+
+   1. 数组，属于基本类型，是固定长度的，存储在栈上
+   2. `Vector`，动态数组，集合类型，可变长度的，存储在堆上
+   3. 创建
+
+      ```rust
+      let a = [1,2,3,4];
+      let b:[u32;5] = [1,2,3,4,5]; // 声明数组类型和数量
+      let c = [3;5]; //5个3
+      ```
+
+   4. 访问，索引方式；如果索引大于或等于数组长度，会 panic
+
+      ```rust
+      let first = a[0];
+      ```
+
+   5. 切片引用
+      切片类型`[T]`大小不固定，切片引用类型`&[T]`大小固定，所以`&[T]`和`&str`一样更有用
+
+      ```rust
+      let s = &a[1..3]
+      ```
+
+### 2.5 流程控制
+
+#### `if`和`else`
+
+   1. `if`语句块是表达式，若要使用其返回值进行赋值，要保证每个分支的返回类型一样
+   2. 就算有多个分支能匹配，也只有第一个匹配的分支会被执行
+   3. 多分支模式匹配用`match`
+
+      ```rust
+      if condition == true{
+      }
+      else{
+      }
+      ```
+
+#### `for`循环，遍历集合内容
+
+   1. 和`in`联动，注意`=`的运用
+   2. 往往使用集合的引用形式，这样不会引发所有权转移
+   3. 元素实现了`Copy`特征的数组，`for`不会转移所有权，而是直接进行了拷贝
+   4. 在循环中修改元素，`&mut container.iter()`
+   5. 在循环中获取元素的索引，`container.iter().enumerate()`，返回元组，`(索引,元素)`
+   6. `_`代替`i`在`for`循环中，忽略元素的值或类型，仅控制某个过程`N`次
+   7. `continue`跳过当次循环，开启下次循环
+   8. `break`直接跳出整个循环
+   9. 使用迭代器而非索引访问集合，更简洁也更安全，同时避免`运行时边界检查`，性能更高
+
+      ```rust
+      //指定范围的循环
+      for i in 1..=5{
+         println!("{}",i); //打印 1 到 5，
+      }
+
+      //所有权转移
+      for item in container.iter() {
+         printf("{}",元素)；
+      }
+
+      //不可变借用
+      for item in &container.iter() {
+         printf("{}",item);
+      }
+
+      //可变借用
+      for item in &mut container.iter(){
+         item = item + 1;
+      }
+
+      //获取索引和对应元素
+      fot (i,e) in container.iter().enumerate(){
+         println!("第 {} 个元素是 {}",i+1,e);
+      }
+
+      //忽略元素的值或类型，仅控制过程
+      for _ in 0..=10{
+         println!("hello world"); //打印10次 "hello world"
+      }
+
+      //跳过2
+      for i in 1..=6{
+         if(i ==2){
+         continue;
+         }
+         println!("{}",i);
+      }
+
+      //遇到2时跳出整个循环
+      for i in 1..10{
+         if(i == 2)
+         {
+            break;
+         }
+         println!("{}",i);
+      }
+      ```
+
+#### `while`循环，有一个条件控制循环，`true`继续，`false`退出
+
+   ```rust
+   let mut n = 0;
+   while n <= 5 {
+      println!("{}",n);
+      n+=1;
+   }
+   ```
+
+#### `loop`循环，简单的无限循环，需要使用`break`跳出循环
+
+   1. `loop`是一个表达式，可以返回一个值
+   2. `break`可以单独使用，也可以带一个返回值`break n *2`，类似`return`
+
+      ```rust
+      let mut n = 0;
+      loop{
+         n +=1;
+         println!("{}",n);
+         if n == 10{
+            break n * 2;
+         }
+      }
+      ```
+
+### 2.6 模式匹配
+
+#### `match`：一种流程控制，对目标所有选项做相应的处理
+
+   1. 必须穷举出所有的选项；`_`表示未列出的，置于最后；分支用`,`逗号分隔
+   2. 每个分支必须是表达式，表达式的最终返回值类型必须相同
+   3. `|`类似逻辑运算符`或`，该分支匹配一个即可
+   4. 若分支有多行代码，需`{}`包裹，同时最后一行代码是表达式
+   5. 本身也是表达式，可以用来赋值
+
+      ```rust
+      enum Direction{
+         East,
+         West,
+         North,
+         South,
+      }
+
+      let dir = Direction::East;
+      match dir {
+         Direction::East => println!("hello"),
+         Direction::West | Direction::South => println!("World"),
+         _ => printfln!("!"),
+      }
+
+      ```
+
+   6. 通用形式
+
+      ```rust
+      match target {
+         模式1 => 表达式1,
+         模式2 => {
+            语句1；
+            语句2；
+            表达式2
+         },
+         _ => 表达式3
+      }
+      ```
+
+   7. 模式绑定：从模式中取出绑定的值；先声明一个数组，每个元素均为一个枚举实例，模式匹配
+
+      ```rust
+      enum Action {
+         Say(String),
+         MoveTo(i32,i32),
+         ChangeRGB(u16,u16,u16),
+      }
+
+      let actions = [
+         Action::Say(String::from("hello")),
+         Action::MoveTo(16,16),
+         Action::ChangeRGB(1,1,1),
+      ];
+
+      for action in actions{
+         match action{
+            Action::Say(s) => println!("{}",s), //(s)匹配至“hello".to_string()
+            Action::MoveTo(x,y) => println!("{}{}",x,y), //(x,y)匹配至实例(16,16)
+            Action::ChangeRGB(a,b,c) => println!("{}{}{}",a,b,c) //(a,b,c)匹配(1,1,1)
+         }
+      }
+      ```
+
+   8. `if let`：只匹配一个条件、忽略其他条件时使用
+
+   9. `matches!`：将一个表达式跟模式进行匹配，返回`true`或`false`
+
+      ```rust
+      enum MyEnum{
+         Foo,
+         Bar，
+      }
+
+      let v =vec![MyEnum::Foo,MyEnum::Bar,MyEnum::Foo];
+      v.iter().filter(|x| matches!(x, MyEnum::Foo))  //过滤`v`，只保留`MyEnum::Foo`的元素
+
+      let foo = 'f';
+      assert!(matches!(foo,'A'..='z' | 'a'..='z'));
+      ```
+
+   10. 变量覆盖：`match`不那么容易看出，需要注意
+
+#### `Option<T>`
+
+   1. 一个变量要么有值`Some(T)`，要么为空`None`
+   2. `match`配合`Option<T>`使用
+
+      ```rust
+         fn plus_one(x:Option<T>) -> Option<T>
+         {
+            match x{
+               Some(i) = > Some(i + 1),
+               None => None,
+            }
+         }
+      ```
+
+#### 适用场景
+
+   1. 匹配类型中的结构和数据，往往和`match`联用，以实现强大的模式匹配能力
+   2. `match`分支
+
+      ```rust
+      match VALUE {
+         PATTERN => EXPRESSION,
+         PATTERN => EXPRESSION,
+         PATTERN => EXPRESSION,
+         _ => EXPRESSION
+      }
+      ```
+
+   3. `if let`分支，只有一种情况会发生时
+
+      ```rust
+         if let PATTERN = VALUE
+         {
+            EXPRESSION,
+         }
+      ```
+
+   4. `while let`条件循环
+
+      ```rust
+      let mut s = Vec::new();
+      s.push(1);
+      s.push(2);
+      s.push(3);
+
+      while let Some(top) = s.pop()
+      {
+         println!("{}",top);
+      }
+      ```
+
+### 2.7 方法
+
+1. 跟结构体、枚举、特征一起使用，`object.method()`；数据和功能分离的方式，会有极高的灵活度。
+2. 跟函数类似，使用`fn`声明，有参数和返回值；不同的是，方法定义在`impl`中，且第一个参数一定是`self`、`&self`或`&mut self`
+3. 允许方法名跟结构体的字段名相同，一般来说，方法跟字段名相同，往往适用于实现`getter`访问器
+
+   ```rust
+   struct Circle{
+      x:f64,
+      y:f64,
+      radius:f64
+   }
+
+   impl Circle{
+      fn new(x:f64,y:f64,radius:f64) -> Self{
+         Circle {
+            x,
+            y,
+            radius
+         }
+      }
+
+      fn area(&self) -> f64{
+         std::f64::consist::PI * (self.radius * self * radius)
+      }
+   }
+   ```
+
+4. `&self`
+   1. `Self`：实现方法的结构体
+   2. `self`：当前调用的结构体实例；为哪个结构体实现方法，`self`就代指哪个结构体的实例
+   3. `&self`：对结构体实例的不可变借用
+   4. `&mut self`：对结构体实例的可变借用
+   5. 仅仅使用`self`作为第一个参数来使用方法获取实例的所有权是很少见的
+   6. `self`的使用，需要严格遵守所有权规则
+
+5. 关联函数
+   1. 结构体构造器，即接受几个参数、构造并返回该结构体的实例，参数中不包含`self`即可
+   2. 定义在`impl`中并且参数没有`self`的函数被称为`关联函数`，是一个函数、不是方法
+   3. 关联函数因为没有`self`，不能使用`f.read()`调用，需使用`f::read()`
+   4. `new` 默认作为构造器的名字，但其不属于关键字范畴
+
+6. 多个`impl`
+   1. 可以定义多个`impl`块，这样可以提供更多的灵活性和代码组织性
+
+### 2.8 泛型特征
+
+#### 泛型
+
+   1. 函数可以处理不同类型的数据，达到多态效应
+   2. 泛型参数，有一个先决条件，必须在使用前对其先声明
+      1. `fn`，函数名称右边声明，`fn name<T: Trait>(x:t,y:t) ->T {}`
+      2. `struct`，结构体名称右边声明，`struct Point<T,U>`
+      3. `enum`，枚举名称右边声明，`enum Option<T>`
+   3. `<T:PartialOrd>`给泛型参数`T`添加可比较特征，`PartialOrd`和`Some`、`None`一样已经预置
+
+      ```rust
+      fn largest<T: PartialOrd>(arr: &[T]) -> &T {
+         let mut largest = &arr[0];
+
+         for item in arr {
+            if item > largest {
+                  largest = item
+            }
+         }
+
+         largest
+      }
+      ```
+
+   4. 枚举泛型,`Option`判断值存在与否，`Result`判断值的正确性
+
+      ```rust
+      enum Option<T>{
+         Some(T),
+         None,
+      }
+
+      enum Result<T, E>{
+         Ok(T),
+         Err(E),
+      }
+      ```
+
+   5. `impl`泛型
+      1. 依然需要提前声明`impl<T,U>`，只有先声明了，才能在`Point<T,U>`中使用
+      2. 此时`Point<T,U>`已不再是一个泛型声明，而是一个完整的结构体
+      3. 还可以在方法中定义泛型，就跟泛型函数一样
+      4. 对于`Point<T,U>`，不仅可以定义基于`(T,U)`的方法，还能针对特定的具体类型，进行方法定义`Point<f32,f64>`
+
+         ```rust
+         struct Point<T,U>{
+            x:T,
+            y:U,
+         }
+         impl<T,U> Point<T,U>
+         {
+            fn x(&self) -> &T{
+               &self.x
+            }
+
+            fn y(&self) -> &U{
+               &self.y
+            }
+
+            fn mixup<V, W: Copy>(&self, other: &Point<V, W>) -> Point<T, W> {
+               Point {
+                     x: self.x,
+                     y: other.y,
+               }
+            }
+         }
+         ```
+
+   6. `const`泛型
+      1. 可以对`类型`实现泛型，也可以对`数量`实现泛型`const N :usize`，用于处理数组长度的问题
+      2. `arr:[T;N]`，定义了一个`[T;N]`数组，`T`是一个基于类型的泛型参数；`N`是一个基于值的泛型参数，替代的是数组的长度
+
+         ```rust
+         fn display_array<T:std::fmt::Debug, const N: usize>(arr:[T;N]){
+            println!("{}",arr);
+         }
+         ```
+
+   7. 性能
+      1. `rust`通过在`编译时`进行泛型代码的单态化来保证`运行时`的效率
+      2. 单态化是在编译时，填充需要使用的具体类型，将通用代码转化为特定代码的过程
+      3. 编译器做的与我们创建泛型函数的步骤刚好相反，我们使用泛型编写不重复的代码，`rust`为每一个实例编译其特定类型的代码，没有运行时开销
+
+#### 特征`trait`
+
+   1. 先定义共享方法的签名，再为不同的类型实现具体的方法，因此结尾是`;`而非`{}`
+   2. 共享定义`pub`
+
+      ```rust
+      pub trait Summary{
+         fn summary(&self) -> String;
+      }
+      ```
+
+   3. 实现
+
+      ```rust
+      pub struct WeiBo{
+         pub title:String,
+         pub author:String,
+         pub content:String,
+      }
+
+      pub struct Post{
+         pub username:String,
+         pub content:String,
+      }
+
+      pub trait Summary{
+         fn summarize(&self) -> String;
+      }
+
+      impl Summary for WeiBo{
+         fn summarize(&self) -> String{
+            format!("文章：{} 作者：{}",self.title,self.author)
+         }
+      }
+
+      impl Summary for Post{
+         fn summarize(&self) -> String{
+            format!("文章 {} 作者{}",self.username,self.content)
+         }
+      }
+      ```
+
+   4. 孤儿规则：如果你想为类型A实现特征T，那么A或T至少有一个是在当前作用域定义
+
+   5. 默认实现，可以调用特征中的其他方法，哪怕该方法没有默认实现；中转一下，不知道意义何在
+
+      ```rust
+      pub trait Summary{
+         fn summarize(&self) -> String{
+            format!("{}",self.summarize_ahtuor())
+         }
+
+         fn summarize_author(&self) -> String;
+      }
+
+      impl Summary for Weibo{} //微博特征采用默认实现
+      impl Summary for Post{
+         fn summarize(&self) -> String{
+            format!("文章 {} 作者{}",self.username,self.content)
+         }
+      }
+      ```
+
+   6. 参数，实现了某特征的参数,`(arr:&impl Trait)`
+
+      ```rust
+      pub fn notify(item:&impl Summary) {
+         println!("{}",item.sumarize());
+      }
+      ```
+
+   7. 约束
+      1. 当使用泛型参数时，往往需要为该参数指定特定的行为，这种指定方式就是通过特征实现
+      2. 单个约束：`fn notify<T:Summary>(item1:&T,item2:&T) {}`
+      3. 多重约束
+         1. `fn notify<T:Summary + Display>(item1:&T,item2:&T) {}`
+      4. `where`简化特征签名
+
+         ```rust
+         fn some_funciton<T,U>(t:&T,u:&U) -> i32
+            where T: Diaplay + Clone,
+                  U: Clone + Debug,
+         {}
+         ```
+
+   8. 方法中使用特征约束
+
+         ```rust
+         impl <T:Diaplay + PartiaOrd> Pair<T>{}
+         ```
+
+   9. 返回值，`impl Trait`：函数返回了一个类型，该类型实现了某个特征；返回类型非常复杂时有用，不知道要怎么声明、用一个特征类型代替
+
+#### 特征类型
+
+   1. 表示实现了`Trait`特征的实例们；`impl Trait`仅代表一种实例、不够泛型；相当于数字`5`和`i32`的区别
+   2. 声明
+      1. `(x:Box<dyn Trait>`
+      2. `(x:&dyn Trait)`
+      3. `dyn`只用在特征类型声明上，在使用时无需添加
+      4. 不能单独使用`dyn`声明特征类型，要使用`&dyn Trait`或`Box<dyn Trait>`
+   3. 使用
+      1. `Box::new(x)`
+      2. `&x`，一般需要在声明时添加生命周期`(x:'static dyn Trait)`
+   4. 限制
+      1. 不是所有的特征都能成为特征类型，只有安全的特征才行
+      2. 特征方法的返回类型不能是`Self`
+      3. 特征方法没有任何的泛型参数
+   5. 好处：无需在运行时检查一个值是否实现了特征或者担心在调用时担心值没有实现特征而出现错误
+
+#### 特征进阶
+
+   1. 关联类型：在特征定义的语句块中，声明`type`一个自定义类型，以便在方法签名中使用该类型，同时能让代码更易读
+
+      ```rust
+      trait Iterator{
+         type Item;
+         fn next(&mut self) -> Option<Self::Item>;
+      }
+
+      impl Iterator for Counter{
+         type Item = i32;
+         fn next(&mt self) -> Option<Self::Item>{
+
+         }
+      }
+
+      let c = Counter{};
+      c.next();
+      ```
+
+   2. 泛型参数默认类型
+      1. 减少实现的样板代码
+      2. 扩展类型但是无需大幅修改代码
+
+      ```rust
+      trait Add<RHS =Self>{
+         type Output;
+         fn add(self, rhs:RHS) -> Self::Output;
+      }
+      ```
+
+      ```rust
+      use std::ops::Add;
+
+      struct A(i32);
+      struct B(f64);
+
+      impl Add<B> for A{
+         type Output = A;
+         fn add(self, other:B) -> A{
+            A(self.0 * other.0)
+         }
+      }
+      ```
+
+   3. 调用同名的方法
+      1. 优先调用类型上的方法`person.fly()`
+      2. 显示调用特征上的方法`Trait::fly(&person)`
+      3. 完全限定语法`<Type as Trait>::function()`
+
+   4. 特征定义中的特征约束
+
+   5. `newtype`绕过孤独规则，为一个元组结构体创建新类型，该元组结构体封闭有一个字段，该字段就是希望实现特征的具体类型
+
+      ```rust
+      use std::fmt;
+      struct Wrapper(Vec<String>); //定义一个新类型Wrapper
+      impl fmt::Display for Wrapper{
+         fn fmt(&self, f:&mut fmt::Formatter) -> fmt::Result{
+            write!(f,"[{}]",self.0.join(","))
+         }
+      }
+      ```
+
+### 2.9 集合
+
+#### vector
+
+   1. 动态数组只能存储相同类型的元素；若想存储不同类型的元素，使用枚举或`特征类型`
+   2. 创建
+
+      ```rust
+      let v: Vec<i32> = Vec::new();
+      let v: Vec<i32> = Vec::with_capacity(10);
+      let v = vec![1, 2, 3];
+      ```
+
+   3. 更新
+
+      ```rust
+      let mut v = vec![2, 3, 4];
+      v.push(10);
+
+      ```
+
+   4. 数组在超出作用域范围后，会被自动删除
+   5. 读取
+      1. 下标索引`&v[n]`，直接返回元素，下标越界时会panic
+      2. `.get(n)`，返回`Option<&T>`，下标越界的情况由`None`处理；搭配`match`使用
+
+         ```rust
+         let v = vec![1, 2, 4, 5];
+         let third = &v[2];
+         println!("{}", third);
+
+         match v.get(3) {
+            Some(i) => println!("{}", i),
+            None => print!("None Value"),
+         };
+         ```
+
+      3. 规则：确保索引不会越界时使用`&v[n]`，否则用`.get(n)`
+      4. 迭代遍历，注意`&`数组，不会转移所有权
+
+         ```rust
+         for i in &v {
+            println!("{}", i);
+         }
+
+         let mut v = vec![1, 2, 3, 4, 5];
+         for i in &mut v {
+            *i += 10;
+         }
+         ```
+
+   6. 不同类型的元素
+      1. 特征类型的数组，必须手动指定数组的类型`:Vec<Box<dyn IpAddr>>`，实现在数组中存储不同类型的ip
+
+         ```rust
+         fn main() {
+            let _v: Vec<Box<dyn IpAddr>> = vec![
+               Box::new(V4("1.1.1.1".to_string())),
+               Box::new(V6("2,2,2,2,2,2".to_string())),
+            ];
+         }
+
+         trait IpAddr {
+            fn display(&self);
+         }
+
+         struct V4(String);
+         impl IpAddr for V4 {
+            fn display(&self) {
+               println!("ipv4: {}", self.0);
+            }
+         }
+
+         struct V6(String);
+         impl IpAddr for V6 {
+            fn display(&self) {
+               println!("ipv6: {}", self.0);
+            }
+         }
+         ```
+
+#### HashMap
+
+   1. 创建
+
+      ```rust
+      use std::collections::HashMap;
+      fn main() {
+         let myhash: HashMap<String, i32> = HashMap::new();
+         //创建固定大小的HashMap，性能更高
+         let myhash: HashMap<String, i32> = HashMap::with_capacity(10);
+         myhash.insert("台北队".to_string(), 60);
+      }
+         ```
+
+      迭代器`into_iter()`和`collect`创建，需要指出`collect`的集合类型，元素类型由编译器推导
+
+      ```rust
+      let team_map: HashMap<_, _> = teams_list.into_iter().collect();
+      ```
+
+   2. 所有权
+      1. 若类型实现`Copy`特征，该类型会被直接复制进hashmap，因此无所谓所有权
+      2. 若没有实现`Copy`特征，所有权会转移进hashmap
+      3. 若使用引用，需确保该引用至少活得跟hashmap一样久
+
+   3. 根据`key`查询`value`
+      1. `get`，成功返回`Some(v)`，否则返回`None`
+
+         ```rust
+         let k = "中国队".to_string();
+         let v = team_map.get(&k);
+         ```
+
+      2. `for`遍历
+
+         ```rust
+         for (k, v) in &team_map {
+            println!("{} {}", k, v);
+         }
+         ```
+
+   4. 更新
+
+      ```rust
+      //直接更新中国队分值
+      team_map.insert("中国队".to_string(), 30);
+      //查询，不存在则插入，存存就啥都不做
+      team_map.entry("乌克兰队".to_string()).or_insert(50);
+      //查询，
+      ```
+
+### 2.10 类型转换
+
+1. `rust`没有为基本类型提供隐式的类型转换，通过`as`显示转换
+2. 如果想要使用一个特征的方法，需要将该特征引入当前作用域
+3. 查询数值类型范围`类型::MIN`，`类型::MAX`，比如`println!("{} {}", i8::MIN, i8::MAX);`
+4. 转换不具有传递性
+5. 正整数大转小，相当于用大数，对小类型的范围取模
+6. 浮点数转整数，超过目标的范围时，直接转化为后者的最大或最小值
+
+#### as
+
+   1. 小类型转换为大类型
+
+      ```rust
+      let a: i8 = 10;
+      let b: i32 = 20;
+      if (a as i32) < b {
+         println!("a < b");
+      }
+
+      if i32::from(a) < b {
+      println!("a < b");
+      }
+      ```
+
+   2. 内存地址转换为指针，再转为整数，移动一个元素的大小，转回为指针，操作对应元素
+
+      ```rust
+      let mut arr = [1, 2];
+      let p1 = arr.as_mut_ptr();
+      let first_add = p1 as usize;
+      let second_add = first_add + 4;
+      let p2 = second_add as *mut i32;
+      unsafe {
+         *p2 += 1;
+      }
+      println!("{}", arr[1]);
+      ```
+
+#### TryInto
+
+   1. 大类型转换为小类型
+   2. 尝试进行一次转换，并返回一个`Result`，此时就可以对其进行相应的处理
+   3. 捕获大类型向小类型转换时导致的溢出错误
+
+      ```rust
+      let b: i16 = 1500;
+      let c: u8 = match b.try_into() {
+         Ok(c) => c,
+         Err(e) => {
+               println!("{}", e.to_string());
+               0
+         }
+      };
+      println!("{}", c);
+      ```
+
+### 2.11 返回值和错误处理
+
+1. 可恢复错误：`Result<T,E>`
+2. 不可恢复错误：`panic!`
+
+#### panic
+
+1. `panic!("just want to panic");`
+2. 程序会打印出一个错误信息，展开报错点往前的函数调用堆栈，最后退出程序
+3. 只有当你不知道该如何处理时，才调用`panic`
+4. 更详细的栈展开信息
+   1. linux/Mac：`RUST_BACKTRACE=1 cargo run`
+   2. Win：`$env:RUST_BACKTRACE=1; cargo run`
+5. `main`线程`panic`，程序会终止，子线程`panic`不会影响到整个程序的结束
+
+#### `Rustlt`和`?`
+
+1. 枚举类型`Result<T,E>`，`T`表示成功时存入正确值的`类型`，存放方式`Ok(T)`，`E`表示错误时存入的`错误值`，存放方式`Err(E)`
+
+   ```rust{
+   enum Result<T,T>
+   {
+      Ok(T),
+      Err(E),
+   }
+   ```
+
+2. 对返回的错误进行处理
+
+   ```rust
+   use std::{fs::File, io::ErrorKind};
+
+   fn main() {
+      let f = File::open("hello.txt");
+      let f = match f {
+         Ok(file) => file,
+         Err(error) => match error.kind() {
+               ErrorKind::NotFound => match File::create("hello.txt") {
+                  Ok(fc) => fc,
+                  Err(e) => panic!("Can't creat file, {:?}", e),
+               },
+               other_error => panic!("Problem open file {:?}", other_error),
+         },
+      };
+      println!("{:?}", f);
+   }
+   ```
+
+3. 用法
+   1. `unwrap()`如果返回成功，就将`Ok(T)`中的值取出来，如果失败直接`panic`，总之不进行任何错误处理
+   2. `except(“s”)`如果返回成功，就将`Ok(T)`中的值取出来，如果失败则打印`s`，带上自定义的错误提示信息
+
+4. 传播错误`?`，相当于使用`match`对`Result<T,E>`处理，如果是`Ok(T)`，则把`T`赋值给`f`，如果结果`Err(E)`，则返回该错误
+5. `?`需要一个变量来承载正确的值，就是需要有所有者；同时要求函数有`Result<T,E>`形式的返回值
+
+   ```rust
+   use std::fs::File;
+   use std::io;
+   use std::io::Read;
+   use std::fs::read_to_string;
+
+   fn main() {
+      println!("Hello, world!");
+   }
+
+   fn read_username_from_file() -> Result<String, io::Error> {
+      let mut f = File::open("hello.txt")?;
+      let mut s = String::new();
+      f.read_to_string(s)?;
+
+      let mut s = String::new();
+      File::open("hello.txt")?.read_to_string(&mut s)?;
+
+      Ok(s)
+
+      read_to_string("hello.txt")
+   }
+   ```
+
+### 2.12 包和模块
+
+#### 包
+
+1. `Package`，项目工程`cargo new package`
+
+2. `Crate`，包，一个编译单元
+
+3. 库，只能作为三方库被其他项目引用，`cargo new lib --lib`
+
+#### `Module`模块
+
+1. 使用模块可以将包中的代码按照功能重组，实现更好的可读性和易用性，同时可以非常灵活的控制代码的可见性
+2. 创建
+
+   ```rust
+   cargo new restaurant --lib
+
+   mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+        fn seat_to_table() {}
+    }
+
+    mod serving {
+        fn take_order() {}
+        fn serve_order() {}
+        fn take_payment() {}
+    }
+
+   }
+   ```
+
+3. 模块树
+
+   ```rust
+      crate
+      └── front_of_house
+            │
+            ├── hosting
+            │     ├── add_to_waitlist
+            │     └── seat_at_table
+            │
+            └── serving
+                   ├── take_order
+                   ├── serve_order
+                   └── take_payment
+   ```
+
+4. 引用模块
+   1. 相对路径
+   2. 绝对路径
+   3. 当代码被挪动位置时，尽量减少引用路径的修改；不确定哪个好时、优先使用绝对路径
+
+      ```rust
+      pub fn eat_at_restaurant() {
+         //绝对路径
+         crate::front_of_house::hosting::add_to_waitlist();
+         //相对路径
+         front_of_house::hosting::add_to_waitlist();
+      }
+      ```
+
+5. 可见性：父模块完全无法访问子模块的私有项，子模块可以访问父模块的私有项；通过`Pub`控制可见性
+6. `super::`代表以父模块为开始的引用方式，类似文件系统的`..`
+
+   ```rust
+   mod back_of_house {
+      fn fix_incorrect_order() {
+         cook_order();
+         super::eat_at_restaurant();
+      }
+
+      pub fn cook_order() {}
+   }
+
+   fn serve_order() {
+      self::back_of_house::cook_order()
+   }
+   ```
+
+7. 结构体和枚举的可见性
+   1. 结构体设置为`pub`，它的所有字段依旧是私有的
+   2. 枚举设为`pub`，它的所有字段将对外可见
+
+8. 模块和文件分离
+
+   ```rust
+   mod front_of_house;
+   pub use crate::front_of_house::front_of_house::hosting::add_to_waitlist;
+   ```
+
+#### `use`用法
+
+1. 引用模块中的项，相对路径和绝对路径
+2. 引用模块还是函数，优先使用最细粒度（引入函数、结构体）等方式，如果引起了某种麻烦，再使用引入模块的方式
+3. 避免同名
+   1. 调用时带上父模块
+   2. 引入时起个`as`别名
+
+   ```rust
+   use std::fmt::Result as FmtResult;
+   use std::io::Result as IoResult;
+   ```
+
+4. 引入项再导出：外部模块引入到当前模块中时，是私有的，可以添加`pub`变为公有
+5. `{}`简化引入方式
+
+   ```rust
+   use std::{cmp, fmt, io};
+   ```
+
+6. `self`表示模块自身
+
+   ```rust
+   use std::io;
+   use std::io::Write;
+
+   use std::{self,Write};
+   ```
+
+7. `*`引入模块下的所有项
+
+8. 受限可见性
+   1. `pub`：可见性无任何限制
+   2. `pub(crate)`：仅当前包可见
+   3. `pub(self)`：仅当前模块可见
+   4. `pub(super)`：在父模块可见
+   5. `pub(in crate::a)`：在指定模块可见
+
+### 2.13 注释和文档
+
+围绕目标，言简易赅
+
+   1. 代码注释
+      1. `//`
+      2. `/* .... */`
+   2. 文档注释，`lib`库中的函数、结构体、枚举
+      1. `///`
+      2. `/** ... */`
+      3. 需要位于`lib`类型的包中，可以使用`markdown`，被注释的对象需要`pub`对外可见
+      4. 文档注释是给用户看的，内部实现细节不应被暴露出去
+      5. 生成`html`文件并打开，`cargo doc --open`
+      6. 文档标题，`Panics`、`Errors`、`Safety`，酌情使用
+   3. 包和模块注释，是文档注释的一种，这些注释需要添加到包、模块的最上方
+      1. `//!`
+      2. `/*! ... */`
+   4. 文档测试，针对库函数
+      1. `cargo test`，需要在文档中使用测试函数的完整路径，因为测试是在一个独立线程中使用的
+
+         ```rust
+         /// let answer = mod1::add(2,3);
+         ```
+
+      2. 在测试函数代码前添加`#`，可以保留测试、同时将测试用例隐藏起来
+
+         ```rust
+         ///```rust
+         ///# let arg = 5;
+         ///# let answer = mod1::add(2,3);
+         /// println!("hello world");
+         ///# assert_eq!(arg, answer);
+         ///```
+         ```
+
+   5. 跳转，添加`[`...`]`，文档中直接打开，IDE中通过`Ctrl + 鼠标左键`
+      1. 代码跳转
+
+         ```rust
+         /// `add one` 返回一个[``Option]类型
+         ```
+
+      2. 路径跳转，使用完整路径跳转到指定项
+      3. 同名跳转
+         1. `[`Foo`](struct@Foo)`
+         2. `[`Foo`](fn@Foo)`
+
+   6. 别名，文档支持别名搜索，可以为自己的类型定义几个别名，以实现在文档中更好的搜索
+
+      ```rust
+      #[doc(alias = "x")]
+      #[doc(aliax = "big")]
+      pub fn add(left: usize, right: usize) -> usize {
+         left + right
+      }
+      ```
+
+### 2.14 格式化输出
+
+1. 分类
+   1. `print!()`：将标准文本输出到标准输出，不带换行
+   2. `println!()`：同上，带换行
+   3. `format!()`：将格式化文本输出到`String`字符串
+   4. `eprint!()`::输出到标准错误
+   5. `eprintln!()`：同上，带换行
+2. 格式化占位符
+   1. `{}`：用于实现了`std::fmt::Display`特征的类型
+   2. `{:#?}`：用于实现了`std::fmt::Debug`特征的类型
+3. 位置参数
+   1. 按照依次顺序使用值替换占位符
+   2. 指定位置，`{1}`，用第二个参数代替此占位符
+4. 具名参数，带名称的参数必须放在不带名称的参数后面
+   1. `println!("{name} {}", 1, name =2)`
+5. 格式化参数
+   1. 只输出小数点后两位，`println!("{:.2}",a)`
+   2. 宽度，`println!("{x:5}","x")`，为`x`后面填充空格，补齐宽度
+   3. 对齐，`println!("{x:<5}")`，左对齐，`>`右，`^`居中
+6. 格式化字符串时捕获环境中的变量，仅限普通的变量
+
+   ```rust
+   let person = String::from("Hello");
+   println!("hello {person}");
+   ```
