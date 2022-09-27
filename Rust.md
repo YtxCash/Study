@@ -1575,13 +1575,392 @@ struct ImportExcept<'a>{
 
 #### 闭包
 
-1. 闭包是一种匿名函数，它可以赋值给变量或作为参数传递给其他函数，不同于函数的是，它允许捕获调用者作用域中的值
+1. 闭包是一种匿名函数，可以为其绑定一个所有者，可以返回一个值，也可作为参数传递给其他函数，允许捕获调用者作用域中的值（通过值的所有者）
 
-   //有一个入参`y`，同时捕获了作用域中的`x`，
+   //有一个入参`y`，同时捕获了作用域中`x`的值
 
    ```rust
    let x =1;
    let sum = |y| y + x;
+
+   println!("{}",sum(4));
+   ```
+
+   定义
+
+     ```rust
+     |param1| 表达式
+     ```
+
+     ```rust
+     |param1, parma2| {
+        语句1;
+        语句2;
+        表达式
+     }
+     ```
+
+2. 返回值
+   1. `action`是一个闭包函数，没有入参、捕获其他变量并返回，类型`|| -> i32`，执行后返回`intensity`
+
+   ```rust
+   use std::thread;
+   use std::time::Duration
+
+   fn main() {
+      let intensity = 10;
+      let random_number = 7;
+
+      exercise(intensity, random_number);
+   }
+
+   fn exercise(intensity: i32, random_number: i32) {
+      let action = || {
+         println!("muuuu....");
+         thread::sleep(Duration::from_secs(2));
+         intensity
+      };
+
+      if intensity < 25 {
+         println!("先做 {} 个俯卧撑", action());
+         println!("再做 {} 组卧推", action());
+      } else if random_number == 3 {
+         println!("今天休息一下吧")
+      } else {
+         println!("今天跑步 {} 分钟", action());
+      }
+   }
+
+   ```
+
+3. 类型推导
+   1. 闭包不会作为`API`对外提供，因此它享受编译器的类型推导能力，无须标注参数和返回值的类型
+   2. 闭包类型推导不是泛型，当编译器推导出一种类型后，就会一直使用该类型
+
+4. 闭包（函数）约束
+   1. `Fn(i32) -> i32`特征，表示该函数拥有一个`i32`类型的参数，同时返回一个`i32`类型的值
+
+5. 捕获
+
+   ```rust
+   let x = 4;
+   let equal_to_x = |z| z ==x;
+   let y =4;
+   assert!(equal_to_x(y));
+   ```
+
+6. 性能
+   1. 当闭包从环境中捕获一个值时，会分配内存存储这些值，某些场景说，这些额外的内存分配会造成某种负担；函数则不会
+
+7. `Fn`特征
+   1. 闭包捕获变量有三种途径，对应参数传入的三种方式：转移所有权，可变借用，不可变借用
+   2. 一个闭包函数实现了哪种`Fn`特征取决于该闭包如何使用被捕获的变量，而不是取决于该闭包如何捕获它们
+   3. 强制闭包获取所捕获变量的所有权，可以在参数列表前加`move ||`，常用于闭包函数的生命周期大于所捕获变量的生命周期
+   4. `FnOnce`：该闭包函数只能运行一次；并且转移所捕获值的所有权，`self`
+   5. `FnMut`：以可变借用的方式捕获了环境中的值，因此可以修改此值，`&mut self`
+   6. `FN`：以不可变借用的方式捕获了环境中的值，`&self`
+   7. 所有的闭包函数自动实现了`FnOnce`特征
+   8. 没有移出所捕获变量所有权的闭包自动实现了`FnMut`特征
+   9. 不需要对捕获变量进行改变的闭包自动实现了`Fn`特征
+   10. 建议先使用`Fn`特征
+
+8. 函数返回值
+
+   ```rust
+   fn factory() -> Box<dyn Fn(i32) -> i32> {
+    let num = 5;
+    Box::new(move |x| x + num)
+   }
    ```
 
 #### 迭代器
+
+1. 惰性初始化：迭代器是惰性的，意味着如果不使用它，它将不会发生任何事
+2. `next`方法，对迭代器的遍历是消耗性的，每次消耗一个元素，最终迭代器没有任何元素，只能返回`None`
+3. 分类
+   1. `into_iter()`：使走所有权
+   2. `iter()`：不可变借用
+   3. `iter_mut()`：可变借用
+
+### 3.3 类型
+
+#### newtype
+
+1. 简单来说就是用`元组结构体`将已有的类型包裹起来，`struct Meter(i32)`，此处`Meter`就是一个全新的类型
+
+2. 用处
+   1. 为外部类型实现外部特征
+
+      ```rust
+      use std::fmt;
+
+      fn main() {
+         let w = Wrapper(vec![String::from("hello"), String::from("world")]);
+         println!("{}", w);
+      }
+
+      struct Wrapper(Vec<String>);
+
+      impl fmt::Display for Wrapper {
+         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "[{}]", self.0.join(", "))
+         }
+      }
+      ```
+
+   2. 更好的可读性及类型异化
+
+      ```rust
+      use std::fmt;
+      use std::ops::Add;
+
+      fn main() {
+         println!("Hello, world!");
+
+         let d = calculate_distance(Meters(10), Meters(20));
+         println!("{}", d);
+      }
+
+      struct Meters(u32);
+      impl fmt::Display for Meters {
+         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "目标距你们 {} 米", self.0)
+         }
+      }
+
+      impl Add for Meters {
+         type Output = Self;
+
+         fn add(self, rhs: Self) -> Self::Output {
+            Self(self.0 + rhs.0)
+         }
+      }
+
+      fn calculate_distance(d1: Meters, d2: Meters) -> Meters {
+         d1 + d2
+      }
+      ```
+
+#### 类型别名
+
+1. 类型别名并不是一个独立的全新的类型，而是某一个类型的别名，`type Meters = i32`
+2. 仅仅是别名，只是为了让可读性更好
+3. 无法为外部类型实现外部特征
+4. 可以减少模版代码的使用
+5. 标准库中，类型别名应用最广的就是简化`Result<T,E>`枚举
+
+#### 永不返回类型 `!`
+
+1. `panic!()`的返回值是`!`，代表它决不会返回任何值
+
+```rust
+   let i = 3;
+   let v = match i {
+      1..=4 => i,
+      _ => panic!(""),
+   };
+   println!("{}", v);
+```
+
+#### DST
+
+1. 将动态数据固定化的秘诀就是使用引用指向这些数据，然后在引用中存储相关的内存位置、长度等信息
+2. 只能间接使用的`DST`
+   1. `str`
+   2. `[T]`
+   3. `dyn Trait`
+
+#### `Size`特征
+
+1. 每个特征都是一个可以通过名称来引用的动态大小类型，如果想把特征作为具体的类型来传递给函数，必须将其转换为一个特征对象，如`&dyn Trait`或`Box<dyn Trait>`
+2. 在泛型函数中使用动态数据类型
+   `T`有可能是固定大小的类型，也有可能是动态大小的类型，因此只能使用其引用
+
+   ```rust
+   fn generic<T:?Sized>(t:&T){}
+   ```
+
+### 3.4 智能指针
+
+#### Box
+
+1. 允许你将一个值分配在堆上，然后在栈上保留一个智能指针指向堆上的数据
+2. 操作系统对栈内存的大小都有限制，堆内存通常只受物理内存限制
+3. `Rust`堆上对象有一个好处，它们都有一个所有者，受所有权规则影响：所有权转移时，只需浅拷贝栈上引用或智能指针
+4. 场景
+   1. 特意将数据分配在堆上
+   2. 数据较大时，又不想在所有权转移时进行数据拷贝
+   3. 类型的大小在编译期无法确定，但我们需要固定大小的类型时
+   4. 特征对象，实现了某特征的一类对象
+5. 使用`Box<T>`将数据存储在堆上：`let a = Box::new(5);`，创建了一个智能指针指向在堆上存储的`5`，并且`a`持有该指针
+6. 动态大小类型转变为固定大小类型：
+
+   ```rust
+   enum List{
+      Cons(i32,Box<List>),
+      Nil,
+   }
+   ```
+
+7. 特征也是`DST`类型，特征对象就是将`DST`类型转换为固定大小类型
+8. `Box::leak()`
+   1. 消费掉`Box`，并且强制目标值从内存中泄漏
+   2. 把一个`String`变成一个`'static`生命周期的`&str`类型
+   3. 可以将一个运行期的值转为`'static`
+   4. 不要滥用、不要交给用户触发
+
+   ```rust
+   fn get_static_str() -> &'static str {
+      let mut s = String::new();
+      s.push_str("Hello World");
+      Box::leak(s.into_boxed_str())
+   }
+   ```
+
+#### Deref
+
+1. 可以让智能指针像引用那样工作，这样就可以写出同时支持智能指针和引用的代码
+2. 一个类型为`T`的对象`foo`，如果`T:Deref<Target = U>`，那么相关`foo`的引用`&foo`在应用的时候会自动转换为`&U`
+3. 最常见的隐式类型转换，而且可以连续的实现如`Box<String> -> String -> &str`的隐式转换，只要链条上的类型实现了`Deref`
+4. 只应该为自定义的智能指针实现`Deref`
+
+#### Drop
+
+1. `Drop`特征中的`drop`方法借用了目标的可变引用，不是拿走了所有权
+2. 结构体中每个字段都有自己的`Drop`
+3. 顺序
+   1. 变量级别，逆序的方式，先声明后`drop`
+   2. 结构体内部，顺序的方式，先声明先`drop`
+4. 无法为一个类型同时实现`Copy`和`Drop`特征
+
+#### Rc 和 Arc
+
+1. `Rc<T>`，引用计数，reference counting，适用于单线程，不可变引用
+2. 希望在堆上分配一个对象供程序多个部分使用且无法确定哪个最后结束时，就可以使用`Rc`
+3. 符合借用规则，要么存在多个不可变借用，要么只能存在一个可变借用
+
+   ```rust
+   let s = Rc::new(String::from("hello world"));
+   let s2 = Rc::clone(&s);
+   println!("{}", Rc::strong_count(&s));
+   println!("{}", Rc::strong_count(&s2));
+   ```
+
+4. 多线程编程中，`Arc`常跟`Mutex`锁组合，它们既可以让我们在多个线程中共享数据，又允许在各个线程中对其进行修改
+5. 总结
+   1. `Rc/Arc`是不可变引用，无法修改它指向的值、只能读取，如果需要修改，需要配合内部可变性`RefCell`或`Mutex`互斥锁
+   2. 一旦最后一个拥有者消失，则资源会被自动回收，这个生命周期在编译期就确定了
+   3. `Rc`只能用于同一线程内部，多线程需要使用`Arc`
+   4. `Rc<T>`是智能指针，实现了`Deref`特征，无需先解开指针再使用里面的`T`，可以直接使用里面的`T`
+6. 多线程`Arc`
+
+   ```rust
+   use std::sync::Arc;
+   use std::thread;
+
+   fn main() {
+      let s = Arc::new(String::from("多线程"));
+      for _ in 1..10 {
+         let s1 = Arc::clone(&s);
+         thread::spawn(move || println!("{}", s1));
+      }
+   }
+   ```
+
+7. 区别
+   1. `Arc`是原子化实现的引用计数，因此是线程安全的，可以用于多线程中共享数据
+
+#### Cell 和 RefCell
+
+1. `Cell<T>`适用于`T`实现了`Copy`的值
+2. 取到值保存到`a`变量后，还可以同时进行修改
+3. 实际开发中，`Cell`使用得并不多
+
+   ```rust
+   use std::cell::Cell;
+   fn main() {
+      let s = Cell::new("Hello");
+      let a = s.get();
+      s.set("world");
+      let b = s.get();
+
+      println!("{} {}", a, b);
+   }
+   ```
+
+4. `RefCell`用于你确信代码是正确的，编译器发生了误判，非线程安全的
+   1. 与`Cell`用于可`Copy`的值不同，`RefCell`用于引用
+   2. `RefCell`只是将借用规则从编译期推迟到运行期，并不能帮你绕过这个规则
+   3. `RefCell`适用于编译期误报或一个引用被在多处代码使用、修改至于难以管理借用关系时
+   4. 使用`RefCell`时，违背借用规则将会导致运行时`panic`
+
+5. 选择
+   1. `Cell`只适用于`Copy`类型的值，`RefCell`适用于引用
+   2. `Cell`不会`Panic`，`RefCell`会`panic`
+   3. `Cell`没有额外的性能损耗，`RefCell`有一点运行时开销，它包含了一个字大小的借用状态指示器
+   4. 当非要使用内部可变时，首先`Cell`，只有当类型没有实现`Copy`时，才选择`RefCell`
+
+6. Rc 和 RefCell
+   1. 前者实现一个数据拥有多个所有者，后者实现数据的可变性
+
+      ```rust
+      use std::cell::RefCell;
+      use std::rc::Rc;
+      fn main() {
+         let s = Rc::new(RefCell::new(String::from("Hello World")));
+         let s1 = s.clone();
+         let s2 = s.clone();
+         s2.borrow_mut().push_str(" string");
+         println!("{:?}", Rc::strong_count(&s1));
+         println!("{:?}", s2);
+      }
+      ```
+
+7. 应用
+   1. 结构体中可能只有个别字段需要修改，其他字段不需要修改，`Cell`或`RefCell`
+
+      ```rust
+      use std::cell::Cell;
+      fn main() {
+         let p = Person {
+            name: String::from("Hello"),
+            age: Cell::new(8),
+         };
+
+         p.age.set(p.age.get() + 1);
+         println!("{:?} {}", p, p.name);
+      }
+
+      #[derive(Debug)]
+      struct Person {
+         name: String,
+         age: Cell<u8>,
+      }
+      ```
+
+#### Weak
+
+1. 非常类似`Rc`，但又与`Rc`持有所有权不同，`weak`不持有所有权，它仅仅保存一份指向数据的弱引用
+2. 如果想要访问数据，需要通过`weak`指针的`upgrade`方法实现，返回一个`Option<Rc<T>>`的值
+3. 弱引用：不保证引用关系依然存在，如果不存存，就返回`None`
+4. `weak`引用不计入所有权，它无法阻止所引用的内存被释放掉，本身不对值的存在性做任何担保，存在就返回`Some`，不存在就返回`None`
+5. 对于父子引用关系，可以让父节点通过`Rc`来引用子节点，然后让子节点通过`weak`来引用父节点
+6. 可访问，但没有所有权，不增加引用计数，因此不会影响引用值的释放回收
+7. `Rc<T>`可以通过`Rc::downgrade(&)`转换为`Weak<T>`
+8. `Weak<T>`可以通过调用`.upgrade()`转换为`Option<Rc<T>>`，然后再取值
+9. 常用于解决循环引用的问题
+
+   ```rust
+   use std::rc::Rc;
+
+   fn main() {
+      let five = Rc::new(5);
+      let weak_five = Rc::downgrade(&five);
+      let strong_five = weak_five.upgrade();
+      assert_eq!(*strong_five.unwrap(), 5);
+
+      drop(five);
+      let strong_five = weak_five.upgrade();
+      println!("{:?}", strong_five);
+   }
+   ```
