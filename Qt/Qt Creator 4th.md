@@ -7,8 +7,8 @@ QWidget
 1. 没有嵌入到其他部件中的部件，因没有父部件，又称为顶级部件
 2. 一般都有边框和标题栏；构造函数有两个参数，`parent`默认为`nullptr`，另一个参数`f`，是`Qt::WindowFlags`类型，由`Qt::WindowType`枚举类型值的或组合
 3. 几何布局对窗口的大小和位置，根据是否`包含边框和标题栏`两种情况，用不同的函数来获取
-    1. 包含框架`x()`, `y()`, `pos()`, `frameGeometry()`, `move()`等
-    2. 不包含框架`geometry()`, `width()`, `height()`, `size()`, `rect()`等
+   1. 包含框架`x()`, `y()`, `pos()`, `frameGeometry()`, `move()`等
+   2. 不包含框架`geometry()`, `width()`, `height()`, `size()`, `rect()`等
 4. `Ctrl`加`Table`快速切换已打开文件
 5. widget1
    1. 创建控制台程序，cmakelist替换Core为Widgets
@@ -19,57 +19,60 @@ QWidget
    6. 显示w和l1，运行程序；清理指针，返回运行结果
 6. 调试包含头文件`QDebug`，然后使用输出流的方式一次输出多个值，`Qt::endl`换行
 
-    ```Qt
-    #include <QDebug>
-    qDebug() << "geometry" << geometry << Qt::endl;
-    ```
+   ```Qt
+   #include <QDebug>
+   qDebug() << "geometry" << geometry << Qt::endl;
+   ```
 
 QDialog
 
 1. 按照运行时对话框是否可以同其他对话框交互分类
-    1. 模态不可以交互，调用对话框的`exec()`函数
 
-        ```Qt
-        QDialog dialog(this);
-        dialog.exec();
-        ```
+   1. 模态不可以交互，调用对话框的`exec()`函数
 
-    2. 非模态可以交互，`new`创建，`show()`显示；`setModal(true)`可以变为模态
+      ```Qt
+      QDialog dialog(this);
+      dialog.exec();
+      ```
 
-        ```Qt
-        QDialog *dialog = new QDialog(this);
-        // dialog -> setModal(true);变为模太
-        dialog -> show();
-        ```
+   2. 非模态可以交互，`new`创建，`show()`显示；`setModal(true)`可以变为模态
+
+      ```Qt
+      QDialog *dialog = new QDialog(this);
+      // dialog -> setModal(true);变为模太
+      dialog -> show();
+      ```
 
 2. 信号和槽
-    1. 在对象的头文件里声明公开槽函数、源文件定义，接着在构造函数里、通过`connect`联接`ui`操作和槽函数
 
-        ```Qt
-        private slots:
-            void on_showChildButton_clicked();
-            void showChildButton();
+   1. 在对象的头文件里声明公开槽函数、源文件定义，接着在构造函数里、通过`connect`联接`ui`操作和槽函数
 
-        void Widget::on_showChildButton_clicked()
-        {
-            QDialog *dialog1 = new QDialog(this);
-            dialog1->resize(200,200);
-            dialog1->setWindowTitle("Modalless 1");
-            dialog1->show();
-        }
+      ```Qt
+      private slots:
+          void on_showChildButton_clicked();
+          void showChildButton();
 
-        void Widget::showChildButton()
-        {
-            QDialog *dialog1 = new QDialog(this);
-            dialog1->resize(200,200);
-            dialog1->setWindowTitle("Modalless 2");
-            dialog1->show();
-        }
+      void Widget::on_showChildButton_clicked()
+      {
+          QDialog *dialog1 = new QDialog(this);
+          dialog1->resize(200,200);
+          dialog1->setWindowTitle("Modalless 1");
+          dialog1->show();
+      }
 
-        connect(ui->showChildButton, &QPushButton::clicked,this,&Widget::showChildButton);
-        ```
+      void Widget::showChildButton()
+      {
+          QDialog *dialog1 = new QDialog(this);
+          dialog1->resize(200,200);
+          dialog1->setWindowTitle("Modalless 2");
+          dialog1->show();
+      }
+
+      connect(ui->showChildButton, &QPushButton::clicked,this,&Widget::showChildButton);
+      ```
 
 3. 自定义对话框
+
    1. `accept()`会隐藏对话框、并返回`QDialog::accepted`这个值
    2. `reject()`返回`QDialog::rejected`这个值，可以用来做判断
    3. `close()`槽在仅有最后一个主界面时调用才会退出，其他情况是隐藏，`show()`会再次显示
@@ -78,12 +81,14 @@ QDialog
    6. `Enter`快捷键`setShortcut(Qt::Key_Return)`，小键盘`Enter`为`setShortcut(Qt::Key_Enter)`
 
 4. Frame，有四个属性
+
    1. `frameShape`边框形状，7种
    2. `frameShadow`边框阴影，3种
    3. `lineWidth`线宽
    4. `MidlineWidth`中线宽
 
 5. Label
+
    1. `wordWrap`文本自动换行；若想在后面省略，使用`QFontMetrics`类的`elidedText()`函数
       1. 过长的原始文本
       2. 用标签的函数`ui->label->fontMetrics().elidedText(texts, Qt::ElideRight, 100)`处理，取得返回的文本
@@ -91,12 +96,14 @@ QDialog
    2. `scaledContents`绽放标签中的内容
 
 6. pushButton
+
    1. `checkable`选中和未选中两种状态
    2. `flat`不显示按钮的边框
    3. `toggled`在两个状态间切换
    4. `tristate`选中、未选中、不改变状态三种
 
 7. lineEdit
+
    1. `echoMode`四种状态，`Normal`正常显示，`NoEcho`不显示，`Password`密码样式，`PasswordEchoOnEdit`编辑时正常显示、其他显示为密码
    2. `inputMask`输入掩码
    3. `text()`输出文本，`displayText()`输出显示的文本

@@ -1,7 +1,7 @@
 # Git
 
-Failed to connect to raw.githubusercontent.com
-输入访问不了的域名,查询之后可以获得正确的 IP 地址,本机的 host 文件中添加
+Failed to connect to raw.githubusercontent.com输入访问不了的域名,查询之后可以获得正确的 IP 地址,本机
+的 host 文件中添加
 
 ```git
 https://www.ipaddress.com
